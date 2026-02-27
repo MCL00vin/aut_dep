@@ -1,0 +1,20 @@
+vrrp_instance VI_1 {
+    state {{ state }}
+    interface ens3
+    virtual_router_id 55
+    priority {{ priority }}
+    advert_int 1
+    unicast_src_ip {{ ansible_host }}
+    unicast_peer {
+        {{ peer_ip }}
+    }
+
+    authentication {
+        auth_type PASS
+        auth_pass abcroot
+    }
+
+    virtual_ipaddress {
+        10.10.10.100/24
+    }
+}

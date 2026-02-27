@@ -1,0 +1,61 @@
+---
+- name: installing and configuring keepalived
+  hosts: loadbalancers
+  become: true
+
+  tasks:
+    - name: install keepalived
+      apt:
+        name: keepalived
+        state: latest
+        update_cache: yes
+
+    - name: deploy keepalived configuration
+      template:
+        src: keepalived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+      notify: Restart Keepalived 
+
+  handlers:
+    - name: Restart Keepalived
+      service:
+        name: keepalived
+        state: restarted
+
+- name: installing and configuring HAProxy for the frontend
+  hosts: loadbalancers
+  become: true
+  
+  vars:
+    # Renamed to virtual_ip to match your haproxy.cfg.j2
+    virtual_ip: "10.10.10.100"
+    backend_servers:
+      - { name: "web-node-1", ip: "10.10.10.10" }
+      - { name: "web-node-2", ip: "10.10.10.11" }    
+
+  tasks:
+    - name: allow HAProxy to bind to VIP (non-local bind)
+      sysctl:
+        name: net.ipv4.ip_nonlocal_bind
+        value: '1'
+        state: present
+        reload: yes
+
+    - name: installing HAProxy
+      apt:
+        name: haproxy
+        state: latest
+        update_cache: yes
+
+    - name: deploy HAProxy configuration
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        mode: '0644'
+      notify: Restart HAProxy
+
+  handlers:
+    - name: Restart HAProxy
+      service:
+        name: haproxy
+        state: restarted

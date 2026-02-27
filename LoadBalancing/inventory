@@ -1,0 +1,8 @@
+[loadbalancers]
+ha1 ansible_host=10.10.10.6 ansible_user=ha1 state=MASTER priority=150 peer_ip=10.10.10.6
+ha2 ansible_host=10.10.10.7 ansible_user=ha2 state=BACKUP priority=100 peer_ip=10.10.10.7 
+
+[webservers]
+frontend1 ansible_host=10.10.10.10
+frontend2 ansible_host=10.10.10.11
+

@@ -1,0 +1,2 @@
+[frontend]
+10.10.10.11 ansible_user=frontend2

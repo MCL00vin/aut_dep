@@ -1,0 +1,45 @@
+- name: Clean ERP Deploy
+  hosts: frontend
+  become: yes
+  vars:
+    app_dir: "/var/www/erp"
+    repo: "https://github.com/MCL00vin/erp_frontend_example.git"
+
+  tasks:
+    - name: Install System Tools
+      apt:
+        name: [git, nginx, nodejs, npm]
+        state: present
+
+    - name: Sync Source Code
+      git:
+        repo: "{{ repo }}"
+        dest: "{{ app_dir }}"
+        force: yes
+
+    - name: Install NPM Packages
+      npm:
+        path: "{{ app_dir }}"
+
+    - name: Build Static Assets
+      command: npm run build
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: Configure and Enable Nginx
+      template:
+        src: erp.conf.j2
+        dest: /etc/nginx/sites-enabled/erp
+      notify: Reload Nginx
+
+    - name: Remove Default Site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
