@@ -1,5 +1,3 @@
-a1@ha1:~$ sudo cat /etc/haproxy/haproxy.cfg 
-[sudo] password for ha1: 
 global
 	log /dev/log	local0
 	log /dev/log	local1 notice
@@ -46,4 +44,5 @@ backend my_web_servers
     balance roundrobin
     {% for server in backend_servers %}
     server {{ server.name }} {{ server.ip }}:80 check
+
     {% endfor %}
