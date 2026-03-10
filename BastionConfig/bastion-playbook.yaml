@@ -1,0 +1,31 @@
+- name: Configuring the Bastion Host to install JumpServer
+  hosts: jumpserver
+  become: true
+  tasks:
+
+    - name: Configure static network (netplan)
+      ansible.builtin.template:
+        src: templates/netplan.j2
+        dest: /etc/netplan/50-cloud-init.yaml
+        owner: root
+        group: root
+        mode: '0600'
+
+    - name: Apply netplan configuration
+      ansible.builtin.command: netplan apply
+
+    - name: Install the required packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - bash
+        state: present
+        update_cache: yes
+
+    - name: Download and run JumpServer installer
+      ansible.builtin.shell: |
+        curl -sSL https://github.com/jumpserver/jumpserver/releases/latest/download/quick_start.sh | bash
+      args:
+        executable: /bin/bash
+        chdir: /opt
+      timeout: 600

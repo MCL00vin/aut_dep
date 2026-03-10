@@ -1,0 +1,12 @@
+[jumpserver]
+10.10.10.180 ansible_user=ba
+
+[jumpserver:vars]
+dhcp4=false
+ip_address=10.10.10.180
+subnet_mask=24
+gateway=10.10.10.1
+static_route_dest=10.10.20.0/24
+static_route_via=10.10.10.177
+dns_primary=8.8.8.8
+dns_secondary=1.1.1.1

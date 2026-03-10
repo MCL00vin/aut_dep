@@ -1,0 +1,16 @@
+network:
+  version: 2
+  ethernets:
+    ens3:
+      dhcp4: {{ dhcp4 }}
+      addresses:
+        - {{ ip_address }}/{{ subnet_mask }}
+      routes:
+        - to: default
+          via: {{ gateway }}
+        - to: {{ static_route_dest }}
+          via: {{ static_route_via }}
+      nameservers:
+        addresses:
+          - {{ dns_primary }}
+          - {{ dns_secondary }}
