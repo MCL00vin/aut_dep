@@ -1,0 +1,97 @@
+---
+- name: Deploy Node Exporter via Docker Compose
+  hosts: all
+  become: true
+
+  vars:
+    compose_dir: /opt/node-exporter
+
+  tasks:
+
+    # ─── Docker Installation (via get.docker.com) ───────────────────────────────
+
+    - name: Check if Docker is already installed
+      command: docker --version
+      register: docker_installed
+      ignore_errors: true
+      changed_when: false
+
+    - name: Download Docker install script
+      get_url:
+        url: https://get.docker.com
+        dest: /tmp/get-docker.sh
+        mode: "0755"
+      when: docker_installed.rc != 0
+
+    - name: Run Docker install script
+      command: sh /tmp/get-docker.sh
+      when: docker_installed.rc != 0
+
+    - name: Ensure Docker service is started and enabled
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    # ─── Node Exporter Deployment ───────────────────────────────────────────────
+
+    - name: Create node-exporter directory
+      file:
+        path: "{{ compose_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Write docker-compose.yml
+      copy:
+        dest: "{{ compose_dir }}/docker-compose.yml"
+        mode: "0644"
+        content: |
+          services:
+            node-exporter:
+              image: prom/node-exporter:v1.8.0
+              container_name: node-exporter
+              ports:
+                - "9100:9100"
+              volumes:
+                - /proc:/host/proc:ro
+                - /sys:/host/sys:ro
+                - /:/rootfs:ro
+              command:
+                - '--path.procfs=/host/proc'
+                - '--path.sysfs=/host/sys'
+                - '--path.rootfs=/rootfs'
+              restart: unless-stopped
+
+    - name: Start node-exporter with Docker Compose
+      command: docker compose up -d --pull always
+      args:
+        chdir: "{{ compose_dir }}"
+
+    # ─── Firewall ───────────────────────────────────────────────────────────────
+
+    - name: Allow port 9100 through UFW (if UFW is active)
+      ufw:
+        rule: allow
+        port: "9100"
+        proto: tcp
+      ignore_errors: true
+
+    # ─── Verify ─────────────────────────────────────────────────────────────────
+
+    - name: Wait for node-exporter to be reachable
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: 9100
+        timeout: 30
+
+    - name: Confirm metrics endpoint responds
+      uri:
+        url: "http://{{ ansible_host }}:9100/metrics"
+        return_content: false
+        status_code: 200
+      register: metrics_check
+
+    - name: Print result
+      debug:
+        msg: "✅ node-exporter is UP on {{ ansible_host }}:9100"
+      when: metrics_check.status == 200

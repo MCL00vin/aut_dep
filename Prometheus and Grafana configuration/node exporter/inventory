@@ -1,0 +1,10 @@
+[loadbalancers]
+10.10.10.6
+10.10.10.7
+
+[frontendservers]
+10.10.10.10
+10.10.10.11
+
+[jumpserver]
+10.10.10.176
