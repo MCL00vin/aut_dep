@@ -7,9 +7,6 @@
     compose_dir: /opt/node-exporter
 
   tasks:
-
-    # ─── Docker Installation (via get.docker.com) ───────────────────────────────
-
     - name: Check if Docker is already installed
       command: docker --version
       register: docker_installed
@@ -67,8 +64,6 @@
       args:
         chdir: "{{ compose_dir }}"
 
-    # ─── Firewall ───────────────────────────────────────────────────────────────
-
     - name: Allow port 9100 through UFW (if UFW is active)
       ufw:
         rule: allow
@@ -76,7 +71,6 @@
         proto: tcp
       ignore_errors: true
 
-    # ─── Verify ─────────────────────────────────────────────────────────────────
 
     - name: Wait for node-exporter to be reachable
       wait_for:
@@ -93,5 +87,5 @@
 
     - name: Print result
       debug:
-        msg: "✅ node-exporter is UP on {{ ansible_host }}:9100"
+        msg: "[+] node-exporter is UP on {{ ansible_host }}:9100"
       when: metrics_check.status == 200
